@@ -2,8 +2,8 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  // Use relative base path for GitHub Pages and subfolder deployments
-  base: './',
+  // Use /exif-viewer-pro/ for GitHub Pages production builds, '/' for local dev
+  base: process.env.NODE_ENV === 'production' ? '/exif-viewer-pro/' : '/',
   server: {
     port: 5173,
     open: false

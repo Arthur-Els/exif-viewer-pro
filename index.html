@@ -7,8 +7,15 @@
     <!-- Content Security Policy: Strict client-side security for static app without tracking or external API calls -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self';"
     />
+
+    <script>
+      // Automatic trailing slash redirection for GitHub Pages compatibility
+      if (window.location.pathname === '/exif-viewer-pro') {
+        window.location.replace('/exif-viewer-pro/' + window.location.search + window.location.hash);
+      }
+    </script>
 
     <meta
       name="description"
@@ -26,6 +33,10 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="./src/styles/base.css" />
+    <link rel="stylesheet" href="./src/styles/components.css" />
   </head>
   <body>
     <!-- Screen reader accessibility announcements for dynamic status changes -->
@@ -102,6 +113,8 @@
             <div class="dropzone-icon-wrapper" aria-hidden="true">
               <svg
                 class="dropzone-icon"
+                width="36"
+                height="36"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
