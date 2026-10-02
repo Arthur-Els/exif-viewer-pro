@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="primary-grad" x1="4" y1="4" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="50%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+    <linearGradient id="lens-grad" x1="20" y1="20" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E1B4B" />
+      <stop offset="100%" stop-color="#312E81" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Camera Body Background -->
+  <rect x="6" y="16" width="52" height="40" rx="10" fill="url(#primary-grad)" />
+  
+  <!-- Camera Top Bump -->
+  <path d="M22 16L25 10H39L42 16H22Z" fill="url(#primary-grad)" />
+  
+  <!-- Flash & Viewfinder -->
+  <circle cx="16" cy="24" r="3" fill="#FFFFFF" fill-opacity="0.9" />
+  <rect x="44" y="22" width="6" height="4" rx="2" fill="#FFFFFF" fill-opacity="0.8" />
+  
+  <!-- Main Lens Outer -->
+  <circle cx="32" cy="36" r="15" fill="#FFFFFF" fill-opacity="0.2" />
+  <circle cx="32" cy="36" r="12" fill="url(#lens-grad)" />
+  
+  <!-- Lens Aperture / Shutter Blade Accents -->
+  <circle cx="32" cy="36" r="8" stroke="#38BDF8" stroke-width="2" stroke-dasharray="8 4" />
+  <circle cx="32" cy="36" r="4" fill="#38BDF8" />
+  
+  <!-- Metadata Info Badge at top right -->
+  <circle cx="48" cy="16" r="8" fill="#10B981" stroke="#FFFFFF" stroke-width="2" />
+  <path d="M48 12V14M48 16V20" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+</svg>
