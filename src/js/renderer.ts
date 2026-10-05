@@ -23,6 +23,7 @@ import {
   formatWhiteBalance
 } from './metadata-formatter.js';
 import { copyToClipboard, downloadJSON, formatDate } from './utils.js';
+import { downloadCleanImage, stripExifFromImage } from './image-cleaner.js';
 import type { NormalizedMetadata } from '../types/metadata.js';
 
 interface ElementOptions {
@@ -358,7 +359,9 @@ export interface RenderResultsOptions {
   containerEl: HTMLElement;
   data: NormalizedMetadata;
   previewUrl: string;
+  file?: File;
   onReset: () => void;
+  onShowError?: (message: string) => void;
   announceStatus: (message: string) => void;
 }
 
@@ -369,7 +372,9 @@ export function renderResults({
   containerEl,
   data,
   previewUrl,
+  file,
   onReset,
+  onShowError,
   announceStatus
 }: RenderResultsOptions): void {
   if (!containerEl) return;
@@ -379,7 +384,7 @@ export function renderResults({
 
   const resultsWrapper = el('div', { className: 'results-wrapper' });
 
-  // 1. Top Bar with Action (Change Photo)
+  // 1. Top Bar with Action (Clean & Download EXIF, Change Photo)
   const topBar = el('div', { className: 'results-top-bar' });
   const topBarTitle = el('div', { className: 'top-bar-info' });
   const fileNameH2 = el('h2', { className: 'photo-title', text: data.file.name });
@@ -390,15 +395,85 @@ export function renderResults({
   topBarTitle.appendChild(fileNameH2);
   topBarTitle.appendChild(fileMetaSpan);
 
+  const topBarActions = el('div', { className: 'top-bar-actions' });
+
+  // Clean & Download Button (Only active if file object is provided)
+  if (file) {
+    const cleanBtn = el('button', {
+      className: 'btn btn-primary',
+      attrs: {
+        type: 'button',
+        id: 'btn-clean-download',
+        'aria-label': 'Hapus data EXIF dan unduh foto bersih'
+      }
+    });
+
+    const shieldSvg = createSvgIcon(
+      'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4',
+      '0 0 24 24'
+    );
+    shieldSvg.setAttribute('class', 'btn-icon');
+
+    const btnLabel = el('span', { text: 'Hapus EXIF & Download' });
+    cleanBtn.appendChild(shieldSvg);
+    cleanBtn.appendChild(btnLabel);
+
+    cleanBtn.addEventListener('click', async () => {
+      cleanBtn.setAttribute('disabled', 'true');
+      cleanBtn.replaceChildren();
+
+      const spinner = el('span', { className: 'btn-spinner' });
+      const loadingText = el('span', { text: 'Membersihkan...' });
+      cleanBtn.appendChild(spinner);
+      cleanBtn.appendChild(loadingText);
+      announceStatus('Sedang menghapus metadata EXIF dari foto...');
+
+      try {
+        const result = await stripExifFromImage(file, file.name);
+        downloadCleanImage(result.blob, result.fileName);
+
+        cleanBtn.classList.add('btn-success');
+        cleanBtn.replaceChildren();
+        const checkIcon = createSvgIcon('M20 6L9 17l-5-5');
+        checkIcon.setAttribute('class', 'btn-icon');
+        cleanBtn.appendChild(checkIcon);
+        cleanBtn.appendChild(el('span', { text: '✓ Terunduh Bersih!' }));
+
+        announceStatus(`Foto bersih ${result.fileName} berhasil diunduh tanpa metadata EXIF.`);
+
+        setTimeout(() => {
+          cleanBtn.removeAttribute('disabled');
+          cleanBtn.classList.remove('btn-success');
+          cleanBtn.replaceChildren();
+          cleanBtn.appendChild(shieldSvg);
+          cleanBtn.appendChild(btnLabel);
+        }, 3000);
+      } catch (err) {
+        console.error('Gagal membersihkan EXIF:', err);
+        cleanBtn.removeAttribute('disabled');
+        cleanBtn.classList.remove('btn-success');
+        cleanBtn.replaceChildren();
+        cleanBtn.appendChild(shieldSvg);
+        cleanBtn.appendChild(btnLabel);
+        if (onShowError) {
+          onShowError('Gagal menghapus metadata EXIF dari foto. Silakan coba lagi.');
+        }
+      }
+    });
+
+    topBarActions.appendChild(cleanBtn);
+  }
+
   const resetBtn = el('button', {
     className: 'btn btn-outline',
     attrs: { type: 'button', id: 'btn-reset-photo' },
     text: 'Pilih Foto Lain'
   });
   resetBtn.addEventListener('click', onReset);
+  topBarActions.appendChild(resetBtn);
 
   topBar.appendChild(topBarTitle);
-  topBar.appendChild(resetBtn);
+  topBar.appendChild(topBarActions);
   resultsWrapper.appendChild(topBar);
 
   // 2. Main Two-Column Layout (Preview & Metadata Grid)

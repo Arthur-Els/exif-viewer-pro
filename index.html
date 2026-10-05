@@ -1,118 +1,165 @@
 <!doctype html>
 <html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Content Security Policy: Strict client-side security for static app without tracking or external API calls -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self';"
+    />
 
-  <!-- Content Security Policy: Strict client-side security for static app without tracking or external API calls -->
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self';" />
+    <script>
+      // Automatic trailing slash redirection for GitHub Pages compatibility
+      if (window.location.pathname === '/exif-viewer-pro') {
+        window.location.replace(
+          '/exif-viewer-pro/' + window.location.search + window.location.hash
+        );
+      }
+    </script>
 
-  <script>
-    // Automatic trailing slash redirection for GitHub Pages compatibility
-    if (window.location.pathname === '/exif-viewer-pro') {
-      window.location.replace('/exif-viewer-pro/' + window.location.search + window.location.hash);
-    }
-  </script>
+    <meta
+      name="description"
+      content="EXIF Viewer - Inspeksi dan hapus metadata EXIF, pengaturan kamera, lensa, eksposur, dan koordinat GPS foto Anda secara instan dan 100% aman di browser tanpa upload server."
+    />
+    <meta name="theme-color" content="#4f46e5" />
+    <title>EXIF Viewer - Inspeksi & Hapus Data EXIF</title>
 
-  <meta name="description"
-    content="Photo Metadata Viewer - Lihat metadata EXIF, pengaturan kamera, lensa, eksposur, dan koordinat GPS foto Anda secara instan dan 100% aman di browser tanpa upload server." />
-  <meta name="theme-color" content="#4f46e5" />
-  <title>EXIF Data Viewer - Inspeksi Data EXIF</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
 
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <!-- Preconnect to Google Fonts for Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
 
-  <!-- Preconnect to Google Fonts for Inter & JetBrains Mono -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
-    rel="stylesheet" />
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="./src/styles/base.css" />
+    <link rel="stylesheet" href="./src/styles/components.css" />
+  </head>
 
-  <!-- Stylesheets -->
-  <link rel="stylesheet" href="./src/styles/base.css" />
-  <link rel="stylesheet" href="./src/styles/components.css" />
-</head>
+  <body>
+    <!-- Screen reader accessibility announcements for dynamic status changes -->
+    <div id="status-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-<body>
-  <!-- Screen reader accessibility announcements for dynamic status changes -->
-  <div id="status-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    <div class="app-container">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="brand-wrapper">
+          <img
+            src="./favicon.svg"
+            alt="Logo EXIF Viewer"
+            class="brand-logo"
+            width="44"
+            height="44"
+          />
+          <h1 class="app-title">EXIF Viewer</h1>
+        </div>
+        <p class="app-tagline">
+          Inspeksi pengaturan kamera, lensa, eksposur, tanggal, dan koordinat GPS dari foto secara
+          instan dan aman.
+        </p>
+      </header>
 
-  <div class="app-container">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="brand-wrapper">
-        <img src="./favicon.svg" alt="Logo EXIF Metadata Viewer" class="brand-logo" width="44" height="44" />
-        <h1 class="app-title">EXIF Data Viewer</h1>
+      <!-- Privacy Notice Banner -->
+      <aside class="privacy-banner" role="status" aria-label="Pemberitahuan Privasi">
+        <svg
+          class="privacy-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="M9 12l2 2 4-4" />
+        </svg>
+        <span>Foto diproses di perangkat dan tidak diupload ke server.</span>
+      </aside>
+
+      <!-- Error / Notification Toast -->
+      <div id="alert-toast" class="alert-toast is-hidden" role="alert" aria-live="assertive">
+        <span id="alert-message">Terjadi kesalahan pada file foto.</span>
+        <button
+          id="alert-close-btn"
+          class="alert-close-btn"
+          type="button"
+          aria-label="Tutup pesan peringatan"
+        >
+          &times;
+        </button>
       </div>
-      <p class="app-tagline">
-        Inspeksi pengaturan kamera, lensa, eksposur, tanggal, dan koordinat GPS dari foto
-        secara instan dan aman.
-      </p>
-    </header>
 
-    <!-- Privacy Notice Banner -->
-    <aside class="privacy-banner" role="status" aria-label="Pemberitahuan Privasi">
-      <svg class="privacy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        <path d="M9 12l2 2 4-4" />
-      </svg>
-      <span>Foto diproses di perangkat dan tidak diupload ke server.</span>
-    </aside>
+      <!-- Main Content Area -->
+      <main id="main-content">
+        <!-- Upload Section -->
+        <section id="upload-section" class="upload-section" aria-label="Area Unggah Foto">
+          <div
+            id="dropzone"
+            class="dropzone-container"
+            tabindex="0"
+            role="button"
+            aria-label="Pilih atau seret foto ke sini untuk memeriksa metadata"
+          >
+            <input
+              id="file-input"
+              type="file"
+              accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.tiff,.tif,.avif"
+              class="sr-only"
+              aria-hidden="true"
+            />
+            <div class="dropzone-icon-wrapper" aria-hidden="true">
+              <svg
+                class="dropzone-icon"
+                width="36"
+                height="36"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <h2 class="dropzone-title">Pilih atau Seret Foto ke Sini</h2>
+            <p class="dropzone-hint">
+              Klik di mana saja pada kotak ini atau lepaskan file foto langsung dari komputermu.
+            </p>
+            <div class="dropzone-badge">
+              <span>Mendukung JPEG, PNG, WebP, HEIC, TIFF • Maks. 25 MB</span>
+            </div>
+          </div>
+        </section>
 
-    <!-- Error / Notification Toast -->
-    <div id="alert-toast" class="alert-toast is-hidden" role="alert" aria-live="assertive">
-      <span id="alert-message">Terjadi kesalahan pada file foto.</span>
-      <button id="alert-close-btn" class="alert-close-btn" type="button" aria-label="Tutup pesan peringatan">
-        &times;
-      </button>
+        <!-- Loading Spinner Section -->
+        <section id="loading-section" class="loading-indicator is-hidden" aria-label="Memuat Data">
+          <div class="spinner" aria-hidden="true"></div>
+          <p class="loading-text">Sedang membaca dan menganalisis metadata foto...</p>
+        </section>
+
+        <!-- Results Display Section -->
+        <section
+          id="results-section"
+          class="results-section is-hidden"
+          aria-label="Hasil Metadata Foto"
+        ></section>
+      </main>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <p>EXIF Viewer &bull; 100% Client-side &bull; Privasi Terjaga Tanpa Server</p>
+      </footer>
     </div>
 
-    <!-- Main Content Area -->
-    <main id="main-content">
-      <!-- Upload Section -->
-      <section id="upload-section" class="upload-section" aria-label="Area Unggah Foto">
-        <div id="dropzone" class="dropzone-container" tabindex="0" role="button"
-          aria-label="Pilih atau seret foto ke sini untuk memeriksa metadata">
-          <input id="file-input" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif,.tiff,.tif,.avif"
-            class="sr-only" aria-hidden="true" />
-          <div class="dropzone-icon-wrapper" aria-hidden="true">
-            <svg class="dropzone-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-          </div>
-          <h2 class="dropzone-title">Pilih atau Seret Foto ke Sini</h2>
-          <p class="dropzone-hint">
-            Klik di mana saja pada kotak ini atau lepaskan file foto langsung dari komputermu.
-          </p>
-          <div class="dropzone-badge">
-            <span>Mendukung JPEG, PNG, WebP, HEIC, TIFF • Maks. 25 MB</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Loading Spinner Section -->
-      <section id="loading-section" class="loading-indicator is-hidden" aria-label="Memuat Data">
-        <div class="spinner" aria-hidden="true"></div>
-        <p class="loading-text">Sedang membaca dan menganalisis metadata foto...</p>
-      </section>
-
-      <!-- Results Display Section -->
-      <section id="results-section" class="results-section is-hidden" aria-label="Hasil Metadata Foto"></section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="app-footer">
-      <p>Photo EXIF Data Viewer &bull; 100% Client-side &bull; Privasi Terjaga Tanpa Server</p>
-    </footer>
-  </div>
-
-  <script type="module" src="./src/main.ts"></script>
-</body>
-
+    <script type="module" src="./src/main.ts"></script>
+  </body>
 </html>

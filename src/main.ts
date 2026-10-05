@@ -1,5 +1,5 @@
 /**
- * @fileoverview Main application entry point for Photo Metadata Viewer.
+ * @fileoverview Main application entry point for EXIF Viewer.
  * Orchestrates file upload events, Web Worker background metadata extraction,
  * DOM rendering, and memory lifecycle management (revoking preview Object URLs).
  */
@@ -132,7 +132,9 @@ async function handleFileSelected(file: File): Promise<void> {
         containerEl: resultsSectionEl,
         data: metadata,
         previewUrl: currentPreviewUrl,
+        file,
         onReset: resetToUpload,
+        onShowError: showError,
         announceStatus
       });
     }

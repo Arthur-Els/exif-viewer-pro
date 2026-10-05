@@ -31,39 +31,40 @@ A production-grade, privacy-first client-side web application to inspect and ana
 |                              [ Tampilkan Data Mentah (Raw JSON)               ]   |
 +-----------------------------------------------------------------------------------+
 ```
-*(Placeholder screenshot: Simpan tangkapan layar antarmuka aplikasi ke `./docs/screenshot.png` untuk dokumentasi visual).*
+
+_(Placeholder screenshot: Simpan tangkapan layar antarmuka aplikasi ke `./docs/screenshot.png` untuk dokumentasi visual)._
 
 ---
 
 ## Fitur Utama (Features)
 
 1. **Validasi File Magic Bytes Asli**:
-   - Memeriksa struktur biner *magic bytes* nyata (JPEG `FF D8 FF`, PNG `89 50 4E 47`, WebP `RIFF...WEBP`, TIFF `II*`/`MM*`, HEIC/AVIF `ftyp`), bukan hanya ekstensi berkas.
+   - Memeriksa struktur biner _magic bytes_ nyata (JPEG `FF D8 FF`, PNG `89 50 4E 47`, WebP `RIFF...WEBP`, TIFF `II*`/`MM*`, HEIC/AVIF `ftyp`), bukan hanya ekstensi berkas.
    - Validasi batas ukuran file hingga **25 MB** dengan notifikasi bahasa Indonesia yang jelas.
 
 2. **Pemrosesan di Latar Belakang (Web Worker)**:
-   - Pembongkaran struktur EXIF dilakukan di dalam dedicated Web Worker (`src/workers/metadata.worker.ts`) menggunakan *transferable ArrayBuffer*, sehingga antarmuka tetap responsif 60 FPS tanpa *lag*.
+   - Pembongkaran struktur EXIF dilakukan di dalam dedicated Web Worker (`src/workers/metadata.worker.ts`) menggunakan _transferable ArrayBuffer_, sehingga antarmuka tetap responsif 60 FPS tanpa _lag_.
 
 3. **Keamanan & Standar Ketat (Zero-XSS & CSP)**:
    - Seluruh nilai metadata dirender murni melalui `textContent` dan manipulasi DOM aman.
-   - Dilengkapi *Content Security Policy* (CSP) statis untuk mencegah injeksi skrip eksternal atau pelacak.
+   - Dilengkapi _Content Security Policy_ (CSP) statis untuk mencegah injeksi skrip eksternal atau pelacak.
 
 4. **Pengelompokan Metadata Lengkap**:
    - **File**: Nama, MIME type, ukuran file aktual dan terformat, serta tanggal modifikasi.
    - **Kamera & Lensa**: Make, model kamera, dan profil lensa.
    - **Pengaturan Eksposur**: ISO, aperture (`f/1.8`), shutter speed (`1/250 s`), focal length (`35 mm & setara full-frame`), status blitz, exposure program, EV bias, white balance, dan metering mode.
-   - **Tanggal & Waktu**: Waktu jepretan asli (*DateTimeOriginal*) dan waktu digital.
+   - **Tanggal & Waktu**: Waktu jepretan asli (_DateTimeOriginal_) dan waktu digital.
    - **Dimensi**: Resolusi piksel, megapiksel (MP), dan orientasi sensor.
    - **GPS & Lokasi**: Derajat, Menit, Detik (DMS) + koordinat desimal, ketinggian, serta tombol navigasi langsung ke **OpenStreetMap**.
 
 5. **Eksplorasi Data Mentah (Raw JSON)**:
-   - Penampil JSON yang dapat diciutkan (*collapsible*).
-   - Tombol **Salin JSON** dengan indikator *feedback* instan dan tombol **Unduh JSON** (`${foto}-metadata.json`).
+   - Penampil JSON yang dapat diciutkan (_collapsible_).
+   - Tombol **Salin JSON** dengan indikator _feedback_ instan dan tombol **Unduh JSON** (`${foto}-metadata.json`).
 
 6. **Aksesibilitas & Tema Otomatis (WCAG AA Compliant)**:
    - Navigasi keyboard penuh (`Enter`/`Space` pada dropzone).
    - Kontras warna teks memenuhi standar WCAG AA/AAA.
-   - *Screen reader announcements* via `aria-live="polite"`.
+   - _Screen reader announcements_ via `aria-live="polite"`.
    - Dark mode otomatis sesuai preferensi sistem operasi (`prefers-color-scheme`).
 
 ---
@@ -121,13 +122,13 @@ photo-metadata-viewer/
 ## Keputusan Desain: Mengapa Client-Side Saja? (Design Decisions)
 
 1. **Privasi & Keamanan Pengguna 100%**:
-   Metadata foto sering memuat informasi sensitif seperti koordinat rumah (GPS), nama pemilik, serial kamera, hingga waktu kegiatan pribadi. Dengan arsitektur murni *client-side*, foto tidak pernah dikirim ke jaringan mana pun.
+   Metadata foto sering memuat informasi sensitif seperti koordinat rumah (GPS), nama pemilik, serial kamera, hingga waktu kegiatan pribadi. Dengan arsitektur murni _client-side_, foto tidak pernah dikirim ke jaringan mana pun.
 2. **Kinerja Instan Tanpa Latensi Unggah**:
    Mengunggah file foto beresolusi tinggi (10 MB – 25 MB) ke server membutuhkan bandwidth dan waktu. Di peramban, pembacaan file lokal memakan waktu kurang dari 50 milidetik.
 3. **Biaya Infrastruktur Nol ($0 Hosting)**:
    Aplikasi statis dapat di-hosting secara gratis di GitHub Pages, Cloudflare Pages, atau Vercel tanpa kebutuhan server Node.js, database, atau tagihan cloud.
 4. **Isolasi Beban Komputasi via Web Worker**:
-   Membongkar struktur biner TIFF/EXIF berukuran besar dapat menyebabkan *jank* pada animasi antarmuka. Dengan memindahkannya ke Web Worker, thread UI utama tetap mulus.
+   Membongkar struktur biner TIFF/EXIF berukuran besar dapat menyebabkan _jank_ pada animasi antarmuka. Dengan memindahkannya ke Web Worker, thread UI utama tetap mulus.
 
 ---
 
@@ -178,6 +179,7 @@ npm run build
 ```
 
 Hasil kompilasi siap saji akan dibuat di folder `dist/`. Anda dapat mengujinya dengan:
+
 ```bash
 npm run preview
 ```

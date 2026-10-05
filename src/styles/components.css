@@ -320,6 +320,13 @@
   overflow: hidden;
 }
 
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .photo-title {
   font-size: 1.25rem;
   font-weight: 700;
@@ -692,6 +699,30 @@
   background-color: var(--success-bg) !important;
   border-color: var(--success-border) !important;
   color: var(--success-text) !important;
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 /* Footer */
