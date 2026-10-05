@@ -1,14 +1,11 @@
 /**
- * @fileoverview DOM Renderer module for the Photo Metadata Viewer.
- * Builds and mounts the image preview, metadata cards, empty states, and raw JSON viewer.
- *
- * CRITICAL SECURITY: All metadata values are strictly rendered using `textContent`
- * to protect against stored XSS attacks from crafted EXIF tags.
+ * @fileoverview DOM Renderer module for EXIF Viewer.
+ * Clean, uncluttered, minimalist 2-column layout.
  */
 
 import {
-  formatAperture,
   formatAltitude,
+  formatAperture,
   formatCoordinate,
   formatDimensions,
   formatExposureCompensation,
@@ -33,9 +30,6 @@ interface ElementOptions {
   children?: (Node | string)[];
 }
 
-/**
- * Safe DOM element factory with textContent escaping.
- */
 function el(tag: string, options: ElementOptions = {}): HTMLElement {
   const { className = '', text = '', attrs = {}, children = [] } = options;
   const element = document.createElement(tag);
@@ -59,300 +53,14 @@ function el(tag: string, options: ElementOptions = {}): HTMLElement {
   return element;
 }
 
-/**
- * Create SVG Icon element safely.
- */
-function createSvgIcon(pathData: string, viewBox: string = '0 0 24 24'): SVGElement {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', viewBox);
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '2');
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  svg.setAttribute('class', 'meta-card-icon');
-  svg.setAttribute('aria-hidden', 'true');
-
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  path.setAttribute('d', pathData);
-  svg.appendChild(path);
-
-  return svg;
-}
-
-/**
- * Create a metadata key-value row.
- */
-function createMetaRow(
-  label: string,
-  value: string | number | null | undefined,
-  subtext: string = ''
-): HTMLElement {
-  const row = el('div', { className: 'meta-row' });
-  const keyEl = el('span', { className: 'meta-key', text: label });
-
-  const valContainer = el('div', { className: 'meta-val-wrapper' });
-  const valEl = el('span', {
-    className: 'meta-val',
-    text: value !== null && value !== undefined && value !== '' ? String(value) : '-'
-  });
-  valContainer.appendChild(valEl);
-
-  if (subtext) {
-    const subEl = el('span', { className: 'meta-subval', text: subtext });
-    valContainer.appendChild(subEl);
+function createMetaRow(key: string, val: string | number | null | undefined): HTMLElement | null {
+  if (val === null || val === undefined || val === '' || val === '-') {
+    return null;
   }
-
-  row.appendChild(keyEl);
-  row.appendChild(valContainer);
+  const row = el('div', { className: 'data-row' });
+  row.appendChild(el('span', { className: 'data-key', text: key }));
+  row.appendChild(el('span', { className: 'data-val', text: String(val) }));
   return row;
-}
-
-/**
- * Create a categorized metadata card.
- */
-function createCard(title: string, icon: SVGElement, rows: HTMLElement[]): HTMLElement {
-  const card = el('section', { className: 'meta-card' });
-
-  const header = el('div', { className: 'meta-card-header' });
-  if (icon) header.appendChild(icon);
-
-  const titleEl = el('h3', { className: 'meta-card-title', text: title });
-  header.appendChild(titleEl);
-
-  const body = el('div', { className: 'meta-card-body' });
-  for (const row of rows) {
-    body.appendChild(row);
-  }
-
-  card.appendChild(header);
-  card.appendChild(body);
-  return card;
-}
-
-/**
- * Render the summary badge bar (Quick EXIF specs: Camera, Aperture, Shutter, ISO, Lens).
- */
-function createQuickSpecsBar(data: NormalizedMetadata): HTMLElement | null {
-  const pills: { label: string; val: string; icon: string }[] = [];
-
-  // Camera model
-  const cameraParts = [data.camera.make, data.camera.model].filter(Boolean) as string[];
-  const cameraName = cameraParts.reduce(
-    (acc, curr) => (acc.includes(curr) ? acc : `${acc} ${curr}`.trim()),
-    ''
-  );
-
-  if (cameraName) {
-    pills.push({
-      label: 'Kamera',
-      val: cameraName,
-      icon: 'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'
-    });
-  }
-
-  // Aperture
-  if (data.exposure.fNumber) {
-    pills.push({
-      label: 'Diafragma',
-      val: formatAperture(data.exposure.fNumber),
-      icon: 'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'
-    });
-  }
-
-  // Shutter Speed
-  if (data.exposure.exposureTime) {
-    pills.push({
-      label: 'Kecepatan Rana',
-      val: formatExposureTime(data.exposure.exposureTime),
-      icon: 'M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z'
-    });
-  }
-
-  // ISO
-  if (data.exposure.iso) {
-    pills.push({
-      label: 'Sensitivitas',
-      val: formatISO(data.exposure.iso),
-      icon: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z'
-    });
-  }
-
-  // Focal Length
-  if (data.exposure.focalLength) {
-    pills.push({
-      label: 'Fokus',
-      val: formatFocalLength(data.exposure.focalLength),
-      icon: 'M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z'
-    });
-  }
-
-  if (pills.length === 0) return null;
-
-  const bar = el('div', {
-    className: 'quick-specs-bar',
-    attrs: { 'aria-label': 'Ringkasan Cepat Pengaturan Foto' }
-  });
-
-  for (const item of pills) {
-    const pill = el('div', { className: 'spec-pill' });
-    const icon = createSvgIcon(item.icon);
-    const content = el('div', { className: 'spec-pill-content' });
-    const lbl = el('span', { className: 'spec-pill-label', text: item.label });
-    const val = el('span', { className: 'spec-pill-val', text: item.val });
-
-    content.appendChild(lbl);
-    content.appendChild(val);
-    pill.appendChild(icon);
-    pill.appendChild(content);
-    bar.appendChild(pill);
-  }
-
-  return bar;
-}
-
-/**
- * Render friendly empty state when no photographic EXIF metadata is present.
- */
-function createEmptyMetadataNotice(): HTMLElement {
-  const notice = el('div', { className: 'empty-metadata-notice' });
-
-  const icon = createSvgIcon(
-    'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'
-  );
-  icon.classList.add('empty-notice-icon');
-
-  const title = el('h4', {
-    className: 'empty-notice-title',
-    text: 'Foto Ini Tidak Memiliki Metadata EXIF / Kamera'
-  });
-
-  const desc = el('p', {
-    className: 'empty-notice-desc',
-    text: 'Banyak aplikasi pesan (seperti WhatsApp, Telegram) dan media sosial (seperti Instagram, Facebook, X) secara otomatis menghapus metadata saat foto dikirim atau diunggah. Hal ini bertujuan untuk melindungi privasi pengirim dan menghemat kuota melalui kompresi data.'
-  });
-
-  const tip = el('p', {
-    className: 'empty-notice-tip',
-    text: '💡 Tips: Agar metadata lengkap tetap terbaca, gunakan file foto asli langsung dari kamera atau galeri ponsel (misal dikirim dalam bentuk "Dokumen/File").'
-  });
-
-  notice.appendChild(icon);
-  notice.appendChild(title);
-  notice.appendChild(desc);
-  notice.appendChild(tip);
-
-  return notice;
-}
-
-/**
- * Render the Raw JSON explorer card with copy and download controls.
- */
-function createRawJsonSection(
-  rawData: Record<string, unknown>,
-  fileName: string,
-  announceStatus: (msg: string) => void
-): HTMLElement {
-  const section = el('section', { className: 'meta-card raw-json-section' });
-
-  const header = el('div', { className: 'meta-card-header raw-json-header' });
-  const icon = createSvgIcon('M16 18l6-6-6-6M8 6l-6 6 6 6');
-  const title = el('h3', { className: 'meta-card-title', text: 'Data Mentah (Raw JSON)' });
-
-  const actions = el('div', { className: 'raw-json-actions' });
-
-  // Toggle Collapse Button
-  const toggleBtn = el('button', {
-    className: 'btn btn-outline btn-sm',
-    attrs: {
-      type: 'button',
-      'aria-expanded': 'false',
-      'aria-controls': 'raw-json-content',
-      id: 'btn-toggle-json'
-    },
-    text: 'Tampilkan JSON'
-  });
-
-  // Copy JSON Button
-  const copyBtn = el('button', {
-    className: 'btn btn-outline btn-sm',
-    attrs: {
-      type: 'button',
-      id: 'btn-copy-json',
-      title: 'Salin JSON ke clipboard'
-    },
-    text: 'Salin JSON'
-  });
-
-  // Download JSON Button
-  const downloadBtn = el('button', {
-    className: 'btn btn-primary btn-sm',
-    attrs: {
-      type: 'button',
-      id: 'btn-download-json',
-      title: 'Unduh file metadata.json'
-    },
-    text: 'Unduh JSON'
-  });
-
-  actions.appendChild(toggleBtn);
-  actions.appendChild(copyBtn);
-  actions.appendChild(downloadBtn);
-
-  header.appendChild(icon);
-  header.appendChild(title);
-  header.appendChild(actions);
-
-  // Content block (initially collapsed)
-  const jsonContent = el('div', {
-    className: 'raw-json-body is-hidden',
-    attrs: { id: 'raw-json-content' }
-  });
-
-  const pre = el('pre', { className: 'raw-json-code' });
-  const code = el('code', {
-    text: JSON.stringify(rawData, null, 2)
-  });
-  pre.appendChild(code);
-  jsonContent.appendChild(pre);
-
-  // Toggle behavior
-  toggleBtn.addEventListener('click', () => {
-    const isHidden = jsonContent.classList.toggle('is-hidden');
-    const isExpanded = !isHidden;
-    toggleBtn.setAttribute('aria-expanded', String(isExpanded));
-    toggleBtn.textContent = isExpanded ? 'Sembunyikan JSON' : 'Tampilkan JSON';
-    announceStatus(isExpanded ? 'Data mentah JSON ditampilkan' : 'Data mentah JSON disembunyikan');
-  });
-
-  // Copy behavior
-  copyBtn.addEventListener('click', async () => {
-    const success = await copyToClipboard(JSON.stringify(rawData, null, 2));
-    if (success) {
-      const originalText = copyBtn.textContent;
-      copyBtn.textContent = '✓ Tersalin!';
-      copyBtn.classList.add('btn-success');
-      announceStatus('JSON berhasil disalin ke clipboard.');
-      setTimeout(() => {
-        copyBtn.textContent = originalText;
-        copyBtn.classList.remove('btn-success');
-      }, 2000);
-    } else {
-      alert('Gagal menyalin ke clipboard.');
-    }
-  });
-
-  // Download behavior
-  downloadBtn.addEventListener('click', () => {
-    const safeBaseName = (fileName || 'foto').replace(/\.[^/.]+$/, '');
-    downloadJSON(rawData, `${safeBaseName}-metadata.json`);
-    announceStatus('File JSON sedang diunduh.');
-  });
-
-  section.appendChild(header);
-  section.appendChild(jsonContent);
-
-  return section;
 }
 
 export interface RenderResultsOptions {
@@ -365,9 +73,6 @@ export interface RenderResultsOptions {
   announceStatus: (message: string) => void;
 }
 
-/**
- * Main DOM renderer for metadata results.
- */
 export function renderResults({
   containerEl,
   data,
@@ -378,327 +83,279 @@ export function renderResults({
   announceStatus
 }: RenderResultsOptions): void {
   if (!containerEl) return;
-
-  // Clear existing content safely
   containerEl.replaceChildren();
 
-  const resultsWrapper = el('div', { className: 'results-wrapper' });
+  const wrap = el('div', { className: 'results-layout' });
 
-  // 1. Top Bar with Action (Clean & Download EXIF, Change Photo)
-  const topBar = el('div', { className: 'results-top-bar' });
-  const topBarTitle = el('div', { className: 'top-bar-info' });
-  const fileNameH2 = el('h2', { className: 'photo-title', text: data.file.name });
-  const fileMetaSpan = el('span', {
-    className: 'photo-subtitle',
-    text: `${formatFileSize(data.file.size)} • ${data.file.type}`
-  });
-  topBarTitle.appendChild(fileNameH2);
-  topBarTitle.appendChild(fileMetaSpan);
+  // 1. Header Toolbar
+  const toolbar = el('div', { className: 'results-bar' });
+  const fileMeta = el('div', { className: 'file-meta' });
+  fileMeta.appendChild(el('span', { className: 'file-name', text: data.file.name }));
+  fileMeta.appendChild(
+    el('span', {
+      className: 'file-sub',
+      text: `${formatFileSize(data.file.size)} • ${data.file.type}`
+    })
+  );
+  toolbar.appendChild(fileMeta);
 
-  const topBarActions = el('div', { className: 'top-bar-actions' });
+  const actions = el('div', { className: 'actions-group' });
 
-  // Clean & Download Button (Only active if file object is provided)
   if (file) {
     const cleanBtn = el('button', {
       className: 'btn btn-primary',
-      attrs: {
-        type: 'button',
-        id: 'btn-clean-download',
-        'aria-label': 'Hapus data EXIF dan unduh foto bersih'
-      }
+      attrs: { type: 'button', id: 'btn-clean-download' },
+      text: 'Hapus EXIF & Unduh'
     });
-
-    const shieldSvg = createSvgIcon(
-      'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4',
-      '0 0 24 24'
-    );
-    shieldSvg.setAttribute('class', 'btn-icon');
-
-    const btnLabel = el('span', { text: 'Hapus EXIF & Download' });
-    cleanBtn.appendChild(shieldSvg);
-    cleanBtn.appendChild(btnLabel);
 
     cleanBtn.addEventListener('click', async () => {
       cleanBtn.setAttribute('disabled', 'true');
-      cleanBtn.replaceChildren();
-
-      const spinner = el('span', { className: 'btn-spinner' });
-      const loadingText = el('span', { text: 'Membersihkan...' });
-      cleanBtn.appendChild(spinner);
-      cleanBtn.appendChild(loadingText);
-      announceStatus('Sedang menghapus metadata EXIF dari foto...');
+      cleanBtn.textContent = 'Memproses...';
+      announceStatus('Sedang menghapus metadata EXIF...');
 
       try {
         const result = await stripExifFromImage(file, file.name);
         downloadCleanImage(result.blob, result.fileName);
 
+        cleanBtn.textContent = '✓ Berhasil Diunduh';
         cleanBtn.classList.add('btn-success');
-        cleanBtn.replaceChildren();
-        const checkIcon = createSvgIcon('M20 6L9 17l-5-5');
-        checkIcon.setAttribute('class', 'btn-icon');
-        cleanBtn.appendChild(checkIcon);
-        cleanBtn.appendChild(el('span', { text: '✓ Terunduh Bersih!' }));
-
-        announceStatus(`Foto bersih ${result.fileName} berhasil diunduh tanpa metadata EXIF.`);
+        announceStatus(`Foto bersih ${result.fileName} berhasil diunduh.`);
 
         setTimeout(() => {
           cleanBtn.removeAttribute('disabled');
           cleanBtn.classList.remove('btn-success');
-          cleanBtn.replaceChildren();
-          cleanBtn.appendChild(shieldSvg);
-          cleanBtn.appendChild(btnLabel);
-        }, 3000);
+          cleanBtn.textContent = 'Hapus EXIF & Unduh';
+        }, 2500);
       } catch (err) {
-        console.error('Gagal membersihkan EXIF:', err);
+        console.error(err);
         cleanBtn.removeAttribute('disabled');
-        cleanBtn.classList.remove('btn-success');
-        cleanBtn.replaceChildren();
-        cleanBtn.appendChild(shieldSvg);
-        cleanBtn.appendChild(btnLabel);
-        if (onShowError) {
-          onShowError('Gagal menghapus metadata EXIF dari foto. Silakan coba lagi.');
-        }
+        cleanBtn.textContent = 'Hapus EXIF & Unduh';
+        if (onShowError) onShowError('Gagal menghapus metadata foto.');
       }
     });
 
-    topBarActions.appendChild(cleanBtn);
+    actions.appendChild(cleanBtn);
   }
 
   const resetBtn = el('button', {
-    className: 'btn btn-outline',
+    className: 'btn btn-secondary',
     attrs: { type: 'button', id: 'btn-reset-photo' },
     text: 'Pilih Foto Lain'
   });
   resetBtn.addEventListener('click', onReset);
-  topBarActions.appendChild(resetBtn);
+  actions.appendChild(resetBtn);
 
-  topBar.appendChild(topBarTitle);
-  topBar.appendChild(topBarActions);
-  resultsWrapper.appendChild(topBar);
+  toolbar.appendChild(actions);
+  wrap.appendChild(toolbar);
 
-  // 2. Main Two-Column Layout (Preview & Metadata Grid)
-  const mainGrid = el('div', { className: 'results-layout-grid' });
+  // 2. Main Two-Column View
+  const contentGrid = el('div', { className: 'content-grid' });
 
-  // Left column: Image preview card
-  const previewCard = el('div', { className: 'preview-card' });
-  const imgWrapper = el('div', { className: 'preview-image-wrapper' });
-  const imgEl = el('img', {
+  // Left: Image View
+  const leftCol = el('div', { className: 'media-col' });
+  const previewBox = el('div', { className: 'preview-box' });
+  const img = el('img', {
     className: 'preview-image',
     attrs: {
       src: previewUrl,
-      alt: `Pratinjau foto ${data.file.name}`,
+      alt: data.file.name,
       loading: 'lazy'
     }
   });
-  imgWrapper.appendChild(imgEl);
+  previewBox.appendChild(img);
+  leftCol.appendChild(previewBox);
 
-  const previewFooter = el('div', { className: 'preview-card-footer' });
-  const previewDimText = el('span', {
-    className: 'preview-badge',
-    text: formatDimensions(
-      data.dimensions.width,
-      data.dimensions.height,
-      data.dimensions.megapixels
-    )
-  });
-  previewFooter.appendChild(previewDimText);
-
-  previewCard.appendChild(imgWrapper);
-  previewCard.appendChild(previewFooter);
-  mainGrid.appendChild(previewCard);
-
-  // Right column: Metadata cards container
-  const metadataColumn = el('div', { className: 'metadata-column' });
-
-  // Quick specs pill bar
-  const quickSpecs = createQuickSpecsBar(data);
-  if (quickSpecs) {
-    metadataColumn.appendChild(quickSpecs);
-  }
-
-  // If no photographic metadata found, display friendly empty state
-  if (!data.hasMetadata) {
-    metadataColumn.appendChild(createEmptyMetadataNotice());
-  }
-
-  // Cards Grid
-  const cardsGrid = el('div', { className: 'cards-grid' });
-
-  // --- CARD 1: INFORMASI FILE ---
-  const fileCard = createCard(
-    'Informasi File',
-    createSvgIcon('M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM13 2v7h7'),
-    [
-      createMetaRow('Nama File', data.file.name),
-      createMetaRow('Tipe File', data.file.type),
-      createMetaRow('Ukuran File', formatFileSize(data.file.size)),
-      createMetaRow('Terakhir Dimodifikasi', formatDate(data.file.lastModified))
-    ]
+  const dimInfo = el('div', { className: 'dim-info' });
+  dimInfo.appendChild(
+    el('span', {
+      text: formatDimensions(
+        data.dimensions.width,
+        data.dimensions.height,
+        data.dimensions.megapixels
+      )
+    })
   );
-  cardsGrid.appendChild(fileCard);
+  if (data.dimensions.orientation) {
+    dimInfo.appendChild(el('span', { text: formatOrientation(data.dimensions.orientation) }));
+  }
+  leftCol.appendChild(dimInfo);
+  contentGrid.appendChild(leftCol);
 
-  // --- CARD 2: KAMERA ---
-  if (data.camera.make || data.camera.model) {
-    const cameraCard = createCard(
-      'Kamera',
-      createSvgIcon(
-        'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'
-      ),
-      [
-        createMetaRow('Merek Kamera', data.camera.make),
-        createMetaRow('Model Kamera', data.camera.model)
-      ]
-    );
-    cardsGrid.appendChild(cameraCard);
+  // Right: Clean Data Groups
+  const rightCol = el('div', { className: 'data-col' });
+
+  // Camera Section
+  const cameraTitle = [data.camera.make, data.camera.model].filter(Boolean).join(' ').trim();
+  if (cameraTitle || data.lens.model || data.software) {
+    const sec = el('div', { className: 'meta-section' });
+    sec.appendChild(el('h2', { className: 'section-heading', text: 'Kamera & Perangkat' }));
+    const list = el('div', { className: 'data-list' });
+    if (cameraTitle) list.appendChild(createMetaRow('Kamera', cameraTitle)!);
+    if (data.lens.model) list.appendChild(createMetaRow('Lensa', data.lens.model)!);
+    if (data.software) list.appendChild(createMetaRow('Software', data.software)!);
+    sec.appendChild(list);
+    rightCol.appendChild(sec);
   }
 
-  // --- CARD 3: LENSA ---
-  if (data.lens.model || data.lens.make) {
-    const lensCard = createCard(
-      'Lensa',
-      createSvgIcon('M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'),
-      [
-        createMetaRow('Model Lensa', data.lens.model),
-        createMetaRow('Pembuat Lensa', data.lens.make)
-      ]
-    );
-    cardsGrid.appendChild(lensCard);
-  }
+  // Exposure Section
+  const expRows: HTMLElement[] = [];
+  const addRow = (key: string, val: string | number | null | undefined) => {
+    const row = createMetaRow(key, val);
+    if (row) expRows.push(row);
+  };
 
-  // --- CARD 4: PENGATURAN EKSPOSUR ---
-  const hasExposureData =
-    data.exposure.iso ||
-    data.exposure.fNumber ||
-    data.exposure.exposureTime ||
-    data.exposure.focalLength ||
-    data.exposure.flash !== null ||
-    data.exposure.exposureProgram ||
-    data.exposure.exposureCompensation !== null ||
-    data.exposure.whiteBalance ||
-    data.exposure.meteringMode;
-
-  if (hasExposureData) {
-    const exposureCard = createCard(
-      'Pengaturan Eksposur',
-      createSvgIcon(
-        'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0z'
-      ),
-      [
-        createMetaRow('Sensitivitas (ISO)', formatISO(data.exposure.iso)),
-        createMetaRow('Diafragma (Aperture)', formatAperture(data.exposure.fNumber)),
-        createMetaRow(
-          'Kecepatan Rana (Shutter Speed)',
-          formatExposureTime(data.exposure.exposureTime)
-        ),
-        createMetaRow(
-          'Panjang Fokus (Focal Length)',
-          formatFocalLength(data.exposure.focalLength, data.exposure.focalLengthIn35mm)
-        ),
-        createMetaRow('Blitz (Flash)', formatFlash(data.exposure.flash)),
-        createMetaRow(
-          'Mode Program Eksposur',
-          formatExposureProgram(data.exposure.exposureProgram)
-        ),
-        createMetaRow(
-          'Kompensasi Eksposur',
-          formatExposureCompensation(data.exposure.exposureCompensation)
-        ),
-        createMetaRow(
-          'Keseimbangan Putih (White Balance)',
-          formatWhiteBalance(data.exposure.whiteBalance)
-        ),
-        createMetaRow('Mode Pengukuran (Metering)', formatMeteringMode(data.exposure.meteringMode))
-      ]
-    );
-    cardsGrid.appendChild(exposureCard);
-  }
-
-  // --- CARD 5: TANGGAL ---
-  if (data.date.taken || data.date.modified) {
-    const dateCard = createCard(
-      'Tanggal & Waktu',
-      createSvgIcon(
-        'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z'
-      ),
-      [
-        createMetaRow('Waktu Pengambilan Foto', formatDate(data.date.taken)),
-        createMetaRow('Waktu Modifikasi Digital', formatDate(data.date.modified))
-      ]
-    );
-    cardsGrid.appendChild(dateCard);
-  }
-
-  // --- CARD 6: DIMENSI ---
-  const dimensionCard = createCard(
-    'Dimensi & Orientasi',
-    createSvgIcon(
-      'M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4'
-    ),
-    [
-      createMetaRow('Resolusi', formatDimensions(data.dimensions.width, data.dimensions.height)),
-      createMetaRow('Megapiksel', data.dimensions.megapixels),
-      createMetaRow('Orientasi', formatOrientation(data.dimensions.orientation))
-    ]
+  addRow('Waktu Rana', formatExposureTime(data.exposure.exposureTime));
+  addRow('Diafragma', formatAperture(data.exposure.fNumber));
+  addRow('ISO', formatISO(data.exposure.iso));
+  addRow(
+    'Panjang Fokus',
+    formatFocalLength(data.exposure.focalLength, data.exposure.focalLengthIn35mm)
   );
-  cardsGrid.appendChild(dimensionCard);
+  addRow('Kompensasi EV', formatExposureCompensation(data.exposure.exposureCompensation));
+  addRow('Flash', formatFlash(data.exposure.flash));
+  addRow('Mode Pengukuran', formatMeteringMode(data.exposure.meteringMode));
+  addRow('Program Eksposur', formatExposureProgram(data.exposure.exposureProgram));
+  addRow('White Balance', formatWhiteBalance(data.exposure.whiteBalance));
 
-  // --- CARD 7: SOFTWARE ---
-  if (data.software) {
-    const softwareCard = createCard(
-      'Perangkat Lunak',
-      createSvgIcon('M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4'),
-      [createMetaRow('Software / Editor', data.software)]
-    );
-    cardsGrid.appendChild(softwareCard);
+  if (expRows.length > 0) {
+    const sec = el('div', { className: 'meta-section' });
+    sec.appendChild(el('h2', { className: 'section-heading', text: 'Pengaturan Eksposur' }));
+    const list = el('div', { className: 'data-list' });
+    expRows.forEach((r) => list.appendChild(r));
+    sec.appendChild(list);
+    rightCol.appendChild(sec);
   }
 
-  // --- CARD 8: GPS & LOKASI ---
+  // GPS Location Section
   if (data.gps.latitude !== null && data.gps.longitude !== null) {
-    const gpsRows = [
-      createMetaRow('Garis Lintang (Latitude)', formatCoordinate(data.gps.latitude, 'lat')),
-      createMetaRow('Garis Bujur (Longitude)', formatCoordinate(data.gps.longitude, 'lon')),
-      createMetaRow('Ketinggian (Altitude)', formatAltitude(data.gps.altitude))
-    ];
+    const sec = el('div', { className: 'meta-section' });
+    sec.appendChild(el('h2', { className: 'section-heading', text: 'Lokasi GPS' }));
+    const list = el('div', { className: 'data-list' });
+    list.appendChild(createMetaRow('Latitude', formatCoordinate(data.gps.latitude, 'lat'))!);
+    list.appendChild(createMetaRow('Longitude', formatCoordinate(data.gps.longitude, 'lon'))!);
+    if (data.gps.altitude) {
+      list.appendChild(createMetaRow('Ketinggian', formatAltitude(data.gps.altitude))!);
+    }
+    sec.appendChild(list);
+
+    // Google Maps Iframe Embed
+    const mapBox = el('div', { className: 'map-frame-box' });
+    const mapFrame = el('iframe', {
+      className: 'map-iframe',
+      attrs: {
+        src: `https://maps.google.com/maps?q=${encodeURIComponent(data.gps.latitude)},${encodeURIComponent(data.gps.longitude)}&hl=id&z=15&output=embed`,
+        loading: 'lazy',
+        referrerpolicy: 'no-referrer-when-downgrade',
+        title: 'Peta Lokasi Google Maps'
+      }
+    });
+    mapBox.appendChild(mapFrame);
+    sec.appendChild(mapBox);
+
+    // Map Action Links
+    const mapLinks = el('div', { className: 'map-links' });
+    const gmapsUrl =
+      data.gps.googleMapsUrl ||
+      `https://www.google.com/maps?q=${encodeURIComponent(data.gps.latitude)},${encodeURIComponent(data.gps.longitude)}`;
+
+    const gmapsBtn = el('a', {
+      className: 'btn btn-secondary btn-sm',
+      attrs: {
+        href: gmapsUrl,
+        target: '_blank',
+        rel: 'noopener noreferrer'
+      },
+      text: 'Buka di Google Maps ↗'
+    });
+    mapLinks.appendChild(gmapsBtn);
 
     if (data.gps.osmUrl) {
-      const osmRow = el('div', { className: 'meta-row meta-row-action' });
       const osmLink = el('a', {
-        className: 'btn btn-outline btn-osm',
+        className: 'link-subtle',
         attrs: {
           href: data.gps.osmUrl,
           target: '_blank',
           rel: 'noopener noreferrer'
         },
-        text: 'Buka Lokasi di OpenStreetMap ↗'
+        text: 'OpenStreetMap ↗'
       });
-      osmRow.appendChild(osmLink);
-      gpsRows.push(osmRow);
+      mapLinks.appendChild(osmLink);
     }
+    sec.appendChild(mapLinks);
 
-    const gpsCard = createCard(
-      'Lokasi GPS',
-      createSvgIcon(
-        'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z'
-      ),
-      gpsRows
-    );
-    cardsGrid.appendChild(gpsCard);
+    rightCol.appendChild(sec);
   }
 
-  metadataColumn.appendChild(cardsGrid);
+  // Date & File Meta
+  const fileRows: HTMLElement[] = [];
+  if (data.date.taken) {
+    fileRows.push(createMetaRow('Waktu Pengambilan', formatDate(data.date.taken))!);
+  }
+  if (data.date.modified) {
+    fileRows.push(createMetaRow('Modifikasi Digital', formatDate(data.date.modified))!);
+  }
+  fileRows.push(createMetaRow('Ukuran', formatFileSize(data.file.size))!);
+  fileRows.push(createMetaRow('Format', data.file.type)!);
 
-  // 3. Raw JSON Section
-  const rawJsonSection = createRawJsonSection(data.raw, data.file.name, announceStatus);
-  metadataColumn.appendChild(rawJsonSection);
+  const fileSec = el('div', { className: 'meta-section' });
+  fileSec.appendChild(el('h2', { className: 'section-heading', text: 'Waktu & File' }));
+  const fileList = el('div', { className: 'data-list' });
+  fileRows.filter(Boolean).forEach((r) => fileList.appendChild(r));
+  fileSec.appendChild(fileList);
+  rightCol.appendChild(fileSec);
 
-  mainGrid.appendChild(metadataColumn);
-  resultsWrapper.appendChild(mainGrid);
+  // Raw JSON toggle
+  const jsonSec = el('div', { className: 'meta-section json-section' });
+  const jsonToggle = el('button', {
+    className: 'link-subtle toggle-btn',
+    attrs: { type: 'button' },
+    text: 'Lihat Raw JSON'
+  });
+  const jsonBox = el('div', { className: 'json-box is-hidden' });
+  const pre = el('pre', { className: 'json-pre' });
+  pre.appendChild(el('code', { text: JSON.stringify(data.raw, null, 2) }));
+  jsonBox.appendChild(pre);
 
-  containerEl.appendChild(resultsWrapper);
+  const copyBtn = el('button', {
+    className: 'btn btn-secondary btn-sm',
+    attrs: { type: 'button' },
+    text: 'Salin JSON'
+  });
+  copyBtn.addEventListener('click', async () => {
+    await copyToClipboard(JSON.stringify(data.raw, null, 2));
+    copyBtn.textContent = 'Tersalin!';
+    setTimeout(() => {
+      copyBtn.textContent = 'Salin JSON';
+    }, 2000);
+  });
 
-  // Scroll smoothly to results
-  resultsWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const downloadBtn = el('button', {
+    className: 'btn btn-secondary btn-sm',
+    attrs: { type: 'button' },
+    text: 'Unduh JSON'
+  });
+  downloadBtn.addEventListener('click', () => {
+    downloadJSON(data.raw, `${data.file.name.replace(/\.[^/.]+$/, '')}-metadata.json`);
+  });
 
-  // Announce for accessibility
-  announceStatus(`Metadata foto ${data.file.name} berhasil dimuat.`);
+  const jsonActions = el('div', { className: 'json-actions is-hidden' });
+  jsonActions.appendChild(copyBtn);
+  jsonActions.appendChild(downloadBtn);
+
+  jsonToggle.addEventListener('click', () => {
+    const hidden = jsonBox.classList.toggle('is-hidden');
+    jsonActions.classList.toggle('is-hidden', hidden);
+    jsonToggle.textContent = hidden ? 'Lihat Raw JSON' : 'Sembunyikan Raw JSON';
+  });
+
+  jsonSec.appendChild(jsonToggle);
+  jsonSec.appendChild(jsonActions);
+  jsonSec.appendChild(jsonBox);
+  rightCol.appendChild(jsonSec);
+
+  contentGrid.appendChild(rightCol);
+  wrap.appendChild(contentGrid);
+
+  containerEl.appendChild(wrap);
+  announceStatus(`Metadata foto ${data.file.name} dimuat.`);
 }

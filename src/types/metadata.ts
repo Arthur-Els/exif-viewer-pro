@@ -50,6 +50,8 @@ export interface GpsInfo {
   longitude: number | null;
   altitude: number | null;
   osmUrl: string | null;
+  googleMapsUrl: string | null;
+  googleMapsEmbedUrl: string | null;
 }
 
 export interface NormalizedMetadata {

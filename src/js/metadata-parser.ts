@@ -191,8 +191,12 @@ export async function parseMetadata(
   }
 
   let osmUrl: string | null = null;
+  let googleMapsUrl: string | null = null;
+  let googleMapsEmbedUrl: string | null = null;
   if (latitude !== null && longitude !== null && !isNaN(latitude) && !isNaN(longitude)) {
     osmUrl = `https://www.openstreetmap.org/?mlat=${encodeURIComponent(latitude)}&mlon=${encodeURIComponent(longitude)}#map=16/${encodeURIComponent(latitude)}/${encodeURIComponent(longitude)}`;
+    googleMapsUrl = `https://www.google.com/maps?q=${encodeURIComponent(latitude)},${encodeURIComponent(longitude)}`;
+    googleMapsEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(latitude)},${encodeURIComponent(longitude)}&hl=id&z=15&output=embed`;
   }
 
   return {
@@ -253,7 +257,9 @@ export async function parseMetadata(
       latitude,
       longitude,
       altitude,
-      osmUrl
+      osmUrl,
+      googleMapsUrl,
+      googleMapsEmbedUrl
     }
   };
 }
