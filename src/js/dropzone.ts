@@ -53,7 +53,7 @@ export function initDropzone({
   dropzoneEl.setAttribute('role', 'button');
   dropzoneEl.setAttribute(
     'aria-label',
-    'Area unggah foto. Klik atau seret file gambar ke sini untuk memeriksa metadata.'
+    'Photo upload area. Click or drag an image file here to inspect metadata.'
   );
 
   let dragCounter = 0;
@@ -66,7 +66,7 @@ export function initDropzone({
     const validation = await validateFileWithMagicBytes(file);
     if (!validation.valid) {
       if (typeof onError === 'function') {
-        onError(validation.error || 'Format file tidak valid.');
+        onError(validation.error || 'Invalid file format.');
       }
       return;
     }

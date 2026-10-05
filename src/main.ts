@@ -49,7 +49,7 @@ function showError(message: string): void {
   if (!alertToastEl || !alertMessageEl) return;
   alertMessageEl.textContent = message;
   alertToastEl.classList.remove('is-hidden');
-  announceStatus(`Peringatan: ${message}`);
+  announceStatus(`Alert: ${message}`);
 }
 
 /**
@@ -71,7 +71,7 @@ function setLoading(isLoading: boolean): void {
     loadingSectionEl.classList.remove('is-hidden');
     uploadSectionEl.classList.add('is-hidden');
     resultsSectionEl.classList.add('is-hidden');
-    announceStatus('Sedang membaca dan menganalisis metadata foto...');
+    announceStatus('Reading and analyzing photo metadata...');
   } else {
     loadingSectionEl.classList.add('is-hidden');
   }
@@ -100,7 +100,7 @@ function resetToUpload(): void {
   if (uploadSectionEl) {
     uploadSectionEl.classList.remove('is-hidden');
   }
-  announceStatus('Siap menerima foto baru.');
+  announceStatus('Ready for a new photo.');
 }
 
 /**
@@ -139,12 +139,12 @@ async function handleFileSelected(file: File): Promise<void> {
       });
     }
   } catch (err) {
-    console.error('Terjadi kesalahan saat memproses foto:', err);
+    console.error('Error occurred while processing photo:', err);
     setLoading(false);
     if (uploadSectionEl) uploadSectionEl.classList.remove('is-hidden');
     if (resultsSectionEl) resultsSectionEl.classList.add('is-hidden');
     revokePreviewUrl();
-    showError('Gagal memproses file foto ini. Pastikan file gambar tidak rusak dan coba lagi.');
+    showError('Failed to process this image file. Please verify it is not corrupted and try again.');
   }
 }
 

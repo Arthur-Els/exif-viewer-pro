@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="id">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -21,12 +21,12 @@
 
     <meta
       name="description"
-      content="EXIF Viewer - Inspeksi dan hapus metadata EXIF foto langsung di browser secara aman."
+      content="EXIF Viewer - Inspect and remove EXIF photo metadata directly in your browser safely."
     />
     <meta name="theme-color" content="#090a0c" />
     <title>EXIF Viewer</title>
 
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="icon" href="./EXIF-logo.png" />
 
     <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -48,24 +48,7 @@
       <!-- Minimal Header -->
       <header class="site-header">
         <a href="./" class="logo">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="14.31" y1="8" x2="20.05" y2="17.94" />
-            <line x1="9.69" y1="8" x2="21.17" y2="8" />
-            <line x1="7.38" y1="12" x2="13.12" y2="2.06" />
-            <line x1="9.69" y1="16" x2="3.95" y2="6.06" />
-            <line x1="14.31" y1="16" x2="2.83" y2="16" />
-            <line x1="16.62" y1="12" x2="10.88" y2="21.94" />
-          </svg>
+          <img src="./EXIF-logo.png" alt="EXIF Logo" class="logo-img" width="28" height="28" />
           <span>EXIF Viewer</span>
         </a>
         <span class="header-badge">100% Client-Side</span>
@@ -73,8 +56,8 @@
 
       <!-- Toast Alert -->
       <div id="alert-toast" class="alert-toast is-hidden" role="alert" aria-live="assertive">
-        <span id="alert-message">Terjadi kesalahan pada file foto.</span>
-        <button id="alert-close-btn" class="alert-close-btn" type="button" aria-label="Tutup pesan">
+        <span id="alert-message">An error occurred while processing the photo.</span>
+        <button id="alert-close-btn" class="alert-close-btn" type="button" aria-label="Close alert">
           &times;
         </button>
       </div>
@@ -82,12 +65,12 @@
       <!-- Main Content -->
       <main id="main-content">
         <!-- Minimal Upload Section -->
-        <section id="upload-section" class="upload-section" aria-label="Unggah Foto">
+        <section id="upload-section" class="upload-section" aria-label="Upload Photo">
           <div class="upload-hero">
-            <h1 class="upload-title">Inspeksi & Hapus Metadata Foto</h1>
+            <h1 class="upload-title">View & Remove EXIF Data</h1>
             <p class="upload-desc">
-              Lihat data EXIF kamera dan koordinat GPS secara instan, atau unduh versi bersih tanpa
-              jejak metadata.
+              View EXIF data and GPS coordinates from photos instantly, then download a clean
+              version without any EXIF data traces.
             </p>
           </div>
 
@@ -96,7 +79,7 @@
             class="dropzone-box"
             tabindex="0"
             role="button"
-            aria-label="Pilih atau seret foto ke sini"
+            aria-label="Select or drag photos here"
           >
             <input
               id="file-input"
@@ -121,29 +104,45 @@
               <polyline points="21 15 16 10 5 21" />
             </svg>
             <div class="dropzone-texts">
-              <span class="dropzone-action">Pilih foto atau seret ke sini</span>
-              <span class="dropzone-formats">JPG, PNG, WebP, HEIC, TIFF hingga 25 MB</span>
+              <span class="dropzone-action">Select or Drag Here</span>
+              <span class="dropzone-formats">JPG, PNG, WebP, HEIC, TIFF up to 25 MB</span>
             </div>
           </div>
+
+          <!-- Informational Section -->
+          <article class="exif-info-card">
+            <h2 class="exif-info-title">What is EXIF data?</h2>
+            <p class="exif-info-text">
+              EXIF stands for Exchangeable Image File Format. It's information saved inside a photo:
+              the camera and lens, exposure settings, when it was taken, and sometimes its GPS
+              location. This information is called metadata. Not every image contains all of these
+              details.
+            </p>
+            <p class="exif-info-text">
+              Checking your photo settings can help you figure out why a subject looks blurry or
+              which lens you used. You can also check for saved GPS coordinates before sharing a
+              photo. The viewer reads IPTC and XMP metadata too, including captions, keywords, and
+              creator credits.
+            </p>
+          </article>
         </section>
 
         <!-- Loading Indicator -->
-        <section id="loading-section" class="loading-indicator is-hidden" aria-label="Memuat Data">
+        <section id="loading-section" class="loading-indicator is-hidden" aria-label="Loading Data">
           <div class="spinner" aria-hidden="true"></div>
-          <p class="loading-text">Membaca metadata foto...</p>
+          <p class="loading-text">Reading photo metadata...</p>
         </section>
 
         <!-- Results Display Section -->
-        <br/>
         <section
           id="results-section"
           class="results-section is-hidden"
-          aria-label="Hasil Metadata Foto"
+          aria-label="Photo Metadata Results"
         ></section>
       </main>
 
       <footer class="site-footer">
-        <span>EXIF Viewer &bull; Semua proses berjalan lokal di browsermu</span>
+        <span>All Rights Reserved &copy; 2026 EXIF Viewer made by Arthur</span>
       </footer>
     </div>
 

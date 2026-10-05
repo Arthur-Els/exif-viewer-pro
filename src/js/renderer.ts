@@ -105,32 +105,32 @@ export function renderResults({
     const cleanBtn = el('button', {
       className: 'btn btn-primary',
       attrs: { type: 'button', id: 'btn-clean-download' },
-      text: 'Hapus EXIF & Unduh'
+      text: 'Remove EXIF & Download'
     });
 
     cleanBtn.addEventListener('click', async () => {
       cleanBtn.setAttribute('disabled', 'true');
-      cleanBtn.textContent = 'Memproses...';
-      announceStatus('Sedang menghapus metadata EXIF...');
+      cleanBtn.textContent = 'Processing...';
+      announceStatus('Removing EXIF metadata...');
 
       try {
         const result = await stripExifFromImage(file, file.name);
         downloadCleanImage(result.blob, result.fileName);
 
-        cleanBtn.textContent = '✓ Berhasil Diunduh';
+        cleanBtn.textContent = '✓ Downloaded Clean';
         cleanBtn.classList.add('btn-success');
-        announceStatus(`Foto bersih ${result.fileName} berhasil diunduh.`);
+        announceStatus(`Clean photo ${result.fileName} downloaded successfully.`);
 
         setTimeout(() => {
           cleanBtn.removeAttribute('disabled');
           cleanBtn.classList.remove('btn-success');
-          cleanBtn.textContent = 'Hapus EXIF & Unduh';
+          cleanBtn.textContent = 'Remove EXIF & Download';
         }, 2500);
       } catch (err) {
         console.error(err);
         cleanBtn.removeAttribute('disabled');
-        cleanBtn.textContent = 'Hapus EXIF & Unduh';
-        if (onShowError) onShowError('Gagal menghapus metadata foto.');
+        cleanBtn.textContent = 'Remove EXIF & Download';
+        if (onShowError) onShowError('Failed to remove photo metadata.');
       }
     });
 
@@ -140,7 +140,7 @@ export function renderResults({
   const resetBtn = el('button', {
     className: 'btn btn-secondary',
     attrs: { type: 'button', id: 'btn-reset-photo' },
-    text: 'Pilih Foto Lain'
+    text: 'Choose Another Photo'
   });
   resetBtn.addEventListener('click', onReset);
   actions.appendChild(resetBtn);
@@ -188,10 +188,10 @@ export function renderResults({
   const cameraTitle = [data.camera.make, data.camera.model].filter(Boolean).join(' ').trim();
   if (cameraTitle || data.lens.model || data.software) {
     const sec = el('div', { className: 'meta-section' });
-    sec.appendChild(el('h2', { className: 'section-heading', text: 'Kamera & Perangkat' }));
+    sec.appendChild(el('h2', { className: 'section-heading', text: 'Camera & Device' }));
     const list = el('div', { className: 'data-list' });
-    if (cameraTitle) list.appendChild(createMetaRow('Kamera', cameraTitle)!);
-    if (data.lens.model) list.appendChild(createMetaRow('Lensa', data.lens.model)!);
+    if (cameraTitle) list.appendChild(createMetaRow('Camera', cameraTitle)!);
+    if (data.lens.model) list.appendChild(createMetaRow('Lens', data.lens.model)!);
     if (data.software) list.appendChild(createMetaRow('Software', data.software)!);
     sec.appendChild(list);
     rightCol.appendChild(sec);
@@ -204,22 +204,22 @@ export function renderResults({
     if (row) expRows.push(row);
   };
 
-  addRow('Waktu Rana', formatExposureTime(data.exposure.exposureTime));
-  addRow('Diafragma', formatAperture(data.exposure.fNumber));
+  addRow('Shutter Speed', formatExposureTime(data.exposure.exposureTime));
+  addRow('Aperture', formatAperture(data.exposure.fNumber));
   addRow('ISO', formatISO(data.exposure.iso));
   addRow(
-    'Panjang Fokus',
+    'Focal Length',
     formatFocalLength(data.exposure.focalLength, data.exposure.focalLengthIn35mm)
   );
-  addRow('Kompensasi EV', formatExposureCompensation(data.exposure.exposureCompensation));
+  addRow('Exposure Bias', formatExposureCompensation(data.exposure.exposureCompensation));
   addRow('Flash', formatFlash(data.exposure.flash));
-  addRow('Mode Pengukuran', formatMeteringMode(data.exposure.meteringMode));
-  addRow('Program Eksposur', formatExposureProgram(data.exposure.exposureProgram));
+  addRow('Metering Mode', formatMeteringMode(data.exposure.meteringMode));
+  addRow('Exposure Program', formatExposureProgram(data.exposure.exposureProgram));
   addRow('White Balance', formatWhiteBalance(data.exposure.whiteBalance));
 
   if (expRows.length > 0) {
     const sec = el('div', { className: 'meta-section' });
-    sec.appendChild(el('h2', { className: 'section-heading', text: 'Pengaturan Eksposur' }));
+    sec.appendChild(el('h2', { className: 'section-heading', text: 'Exposure Settings' }));
     const list = el('div', { className: 'data-list' });
     expRows.forEach((r) => list.appendChild(r));
     sec.appendChild(list);
@@ -229,12 +229,12 @@ export function renderResults({
   // GPS Location Section
   if (data.gps.latitude !== null && data.gps.longitude !== null) {
     const sec = el('div', { className: 'meta-section' });
-    sec.appendChild(el('h2', { className: 'section-heading', text: 'Lokasi GPS' }));
+    sec.appendChild(el('h2', { className: 'section-heading', text: 'GPS Location' }));
     const list = el('div', { className: 'data-list' });
     list.appendChild(createMetaRow('Latitude', formatCoordinate(data.gps.latitude, 'lat'))!);
     list.appendChild(createMetaRow('Longitude', formatCoordinate(data.gps.longitude, 'lon'))!);
     if (data.gps.altitude) {
-      list.appendChild(createMetaRow('Ketinggian', formatAltitude(data.gps.altitude))!);
+      list.appendChild(createMetaRow('Altitude', formatAltitude(data.gps.altitude))!);
     }
     sec.appendChild(list);
 
@@ -243,10 +243,10 @@ export function renderResults({
     const mapFrame = el('iframe', {
       className: 'map-iframe',
       attrs: {
-        src: `https://maps.google.com/maps?q=${encodeURIComponent(data.gps.latitude)},${encodeURIComponent(data.gps.longitude)}&hl=id&z=15&output=embed`,
+        src: `https://maps.google.com/maps?q=${encodeURIComponent(data.gps.latitude)},${encodeURIComponent(data.gps.longitude)}&hl=en&z=15&output=embed`,
         loading: 'lazy',
         referrerpolicy: 'no-referrer-when-downgrade',
-        title: 'Peta Lokasi Google Maps'
+        title: 'Google Maps Location'
       }
     });
     mapBox.appendChild(mapFrame);
@@ -265,7 +265,7 @@ export function renderResults({
         target: '_blank',
         rel: 'noopener noreferrer'
       },
-      text: 'Buka di Google Maps ↗'
+      text: 'Open in Google Maps ↗'
     });
     mapLinks.appendChild(gmapsBtn);
 
@@ -289,16 +289,16 @@ export function renderResults({
   // Date & File Meta
   const fileRows: HTMLElement[] = [];
   if (data.date.taken) {
-    fileRows.push(createMetaRow('Waktu Pengambilan', formatDate(data.date.taken))!);
+    fileRows.push(createMetaRow('Date Taken', formatDate(data.date.taken))!);
   }
   if (data.date.modified) {
-    fileRows.push(createMetaRow('Modifikasi Digital', formatDate(data.date.modified))!);
+    fileRows.push(createMetaRow('Date Digitized', formatDate(data.date.modified))!);
   }
-  fileRows.push(createMetaRow('Ukuran', formatFileSize(data.file.size))!);
+  fileRows.push(createMetaRow('File Size', formatFileSize(data.file.size))!);
   fileRows.push(createMetaRow('Format', data.file.type)!);
 
   const fileSec = el('div', { className: 'meta-section' });
-  fileSec.appendChild(el('h2', { className: 'section-heading', text: 'Waktu & File' }));
+  fileSec.appendChild(el('h2', { className: 'section-heading', text: 'File & Time' }));
   const fileList = el('div', { className: 'data-list' });
   fileRows.filter(Boolean).forEach((r) => fileList.appendChild(r));
   fileSec.appendChild(fileList);
@@ -309,7 +309,7 @@ export function renderResults({
   const jsonToggle = el('button', {
     className: 'link-subtle toggle-btn',
     attrs: { type: 'button' },
-    text: 'Lihat Raw JSON'
+    text: 'View Raw JSON'
   });
   const jsonBox = el('div', { className: 'json-box is-hidden' });
   const pre = el('pre', { className: 'json-pre' });
@@ -319,20 +319,20 @@ export function renderResults({
   const copyBtn = el('button', {
     className: 'btn btn-secondary btn-sm',
     attrs: { type: 'button' },
-    text: 'Salin JSON'
+    text: 'Copy JSON'
   });
   copyBtn.addEventListener('click', async () => {
     await copyToClipboard(JSON.stringify(data.raw, null, 2));
-    copyBtn.textContent = 'Tersalin!';
+    copyBtn.textContent = 'Copied!';
     setTimeout(() => {
-      copyBtn.textContent = 'Salin JSON';
+      copyBtn.textContent = 'Copy JSON';
     }, 2000);
   });
 
   const downloadBtn = el('button', {
     className: 'btn btn-secondary btn-sm',
     attrs: { type: 'button' },
-    text: 'Unduh JSON'
+    text: 'Download JSON'
   });
   downloadBtn.addEventListener('click', () => {
     downloadJSON(data.raw, `${data.file.name.replace(/\.[^/.]+$/, '')}-metadata.json`);
@@ -345,7 +345,7 @@ export function renderResults({
   jsonToggle.addEventListener('click', () => {
     const hidden = jsonBox.classList.toggle('is-hidden');
     jsonActions.classList.toggle('is-hidden', hidden);
-    jsonToggle.textContent = hidden ? 'Lihat Raw JSON' : 'Sembunyikan Raw JSON';
+    jsonToggle.textContent = hidden ? 'View Raw JSON' : 'Hide Raw JSON';
   });
 
   jsonSec.appendChild(jsonToggle);
@@ -357,5 +357,5 @@ export function renderResults({
   wrap.appendChild(contentGrid);
 
   containerEl.appendChild(wrap);
-  announceStatus(`Metadata foto ${data.file.name} dimuat.`);
+  announceStatus(`Photo metadata for ${data.file.name} loaded.`);
 }
